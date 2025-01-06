@@ -12,24 +12,26 @@
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js"></script>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <style>
-        #selectionDiv {
-            position: relative;
-            /* Use absolute positioning */
-            top: 0;
-            /* Make the div full width (optional) */
-            padding: 10px;
-            /* Add some padding */
-            background-color: #f9f9f9;
-            /* Background for visibility */
-            border-bottom: 1px solid #ccc;
-            /* Add a border at the bottom */
-            z-index: 1000;
-            /* Ensure it is above other content */
-        }
-    </style>
 </head>
 <style>
+    #selectionDiv {
+        position: flex;
+        top: 0;
+        padding: 10px;
+        background-color: #f9f9f9;
+        border-bottom: 1px solid #ccc;
+        z-index: 1000;
+    }
+
+    .opacityDiv {
+        display: flex;
+        top: 0;
+        padding: 10px;
+        background-color: #f9f9f9;
+        border-bottom: 1px solid #ccc;
+        z-index: 1000;
+    }
+
     html,
     body {
         margin: 0;
@@ -74,15 +76,6 @@
         float: left;
         margin-right: 8px;
         opacity: 1;
-    }
-
-    #selections {
-        position: relative;
-        float: right;
-        margin-top: 25px;
-        margin-bottom: 25px;
-        margin-right: 25px;
-        margin-left: 25px;
     }
 
     #title {
@@ -141,6 +134,7 @@
 
             // Legend to be added later in script
             legend.onAdd = function (map) {
+                map.fitBounds(map.getBounds());
                 var div = L.DomUtil.create('div', 'info legend');
                 incomeCol = document.getElementById("selectionDiv").childNodes[1].value;
                 if (incomeCol === "median_income_(dollars)" || incomeCol === "mean_income_(dollars)") {
@@ -191,6 +185,7 @@
             var popupString = "";
             title = document.getElementById('title');
             var selectionDiv;
+            var opacityDiv;
 
             // this layer is for the search function
             var postcodesLayer;
@@ -260,8 +255,9 @@
                                 zipLayer = layer;
                                 map.fitBounds(zipLayer.getBounds(), { animate: false });
                                 zipLayer.setStyle({
-                                    weight: 5,
+                                    weight: 7,
                                     color: "black",
+                                    dashArray: "10 10",
                                     opacity: '1',
                                     fillOpacity: 0
                                 });
@@ -290,47 +286,47 @@
                         onEachFeature: function onEachFeature(feature, layer) {
                             popupString = '<strong>' + feature.properties['GEOIDFQ'] + '</strong>'
                             layer.bindPopup(popupString);
-                        }
+                        },
+                        style: { color: '#5a5a5a', weight: 3, fillColor: '#3388ff', fillOpacity: 0.5 }
                     }
                 ).addTo(map);
 
                 // div for opacity
-                var inputSlideDiv = document.createElement('div');
-                inputSlideDiv.setAttribute("display", "inline");
-                inputSlideDiv.style.display = 'flex';
+                const opacityDiv = document.createElement('div');
+                opacityDiv.id = 'opacityDiv';
+                opacityDiv.className = 'opacityDiv'
 
-                // text
-                var opacityText = document.createTextNode('Opacity');
-                opacityText.id = "opacity";
-                inputSlideDiv.appendChild(opacityText);
-                // input
-                var inputSlideInput = document.createElement('input');
+                // Input div
+                const opacitySlideDiv = document.createElement('div');
+                opacitySlideDiv.id = "opacitySlideDiv";
+                const inputSlideInput = document.createElement('input');
                 inputSlideInput.id = 'opacitySlide';
                 inputSlideInput.type = "range";
                 inputSlideInput.min = 0;
                 inputSlideInput.max = 0.75;
                 inputSlideInput.step = 0.01;
-                inputSlideInput.value = 0.4;
+                inputSlideInput.value = 0.5;
                 inputSlideInput.style.width = "200px";
-                inputSlideDiv.appendChild(inputSlideInput);
+                opacitySlideDiv.appendChild(inputSlideInput);
 
                 // Text changes with slider
-                var opacityPercentTextDiv = document.createElement('div');
+                const opacityPercentTextDiv = document.createElement('div');
                 opacityPercentTextDiv.id = "opacityPercentTextDiv"
-                opacityPercentText = document.createTextNode('40%');
+                opacityPercentText = document.createTextNode('50% Opacity');
                 opacityPercentTextDiv.appendChild(opacityPercentText);
-                inputSlideDiv.appendChild(opacityPercentTextDiv);
 
                 inputSlideInput.addEventListener('change', function updateOpacity(e) {
                     if (geojson != undefined)
                         geojson.setStyle({
                             fillOpacity: e.target.value
                         });
-                    opacityPercentTextDiv.innerText = Math.round(e.target.value * 100.0) + "%"
+                    opacityPercentTextDiv.innerText = Math.round(e.target.value * 100.0) + "% Opacity"
                 });
 
                 // Add to title
-                document.getElementById('title').appendChild(inputSlideDiv);
+                opacityDiv.appendChild(opacitySlideDiv);
+                opacityDiv.appendChild(opacityPercentTextDiv);
+                document.getElementById('title').appendChild(opacityDiv);
 
                 // Function to set style depending on variable
                 function UpdateLayerStyle(selectionCol, incomeCol, opacityValue) {
@@ -340,7 +336,7 @@
                                 fillColor: getColorMoney(e.properties[selectionCol]),
                                 weight: 3,
                                 opacity: 1,
-                                color: 'white',
+                                color: '#5a5a5a',
                                 fillOpacity: opacityValue
                             }
                         } else if (incomeCol === 'total') {
@@ -348,7 +344,7 @@
                                 fillColor: getTotals(e.properties[selectionCol]),
                                 weight: 3,
                                 opacity: 1,
-                                color: 'white',
+                                color: '#5a5a5a',
                                 fillOpacity: opacityValue
                             }
                         }
@@ -357,7 +353,7 @@
                                 fillColor: getPercent(e.properties[selectionCol]),
                                 weight: 3,
                                 opacity: 1,
-                                color: 'white',
+                                color: '#5a5a5a',
                                 fillOpacity: opacityValue
                             }
                         }
@@ -389,7 +385,7 @@
                         layer.bindPopup(popupString);
                     });
                     map.addControl(legend);
-                    map.fitBounds(map.getBounds());
+                    //map.fitBounds(map.getBounds());
                 }
                 selectionDiv.addEventListener('change', handleChange);
 
