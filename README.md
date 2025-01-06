@@ -1,4 +1,4 @@
-## Massachussets Income By Census Tract (2023)
+## Massachusetts Income By Census Tract (2023)
 
 A simple webmapping application to show different categories of income data by census tract. The map is a static html file using the data process below.
 [Try Me!](https://raw.githack.com/winstonhoyle/massachusetts-income-tracts/main/app/index.html)

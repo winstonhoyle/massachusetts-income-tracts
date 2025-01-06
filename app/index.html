@@ -309,7 +309,7 @@
 
                 // div for opacity
                 var inputSlideDiv = document.createElement('div');
-                inputSlideDiv.setAttribute("display","inline");
+                inputSlideDiv.setAttribute("display", "inline");
                 inputSlideDiv.style.display = 'flex';
 
                 // text
@@ -324,8 +324,9 @@
                 inputSlideInput.max = 0.75;
                 inputSlideInput.step = 0.01;
                 inputSlideInput.value = 0.4;
+                inputSlideInput.style.width = "200px";
                 inputSlideDiv.appendChild(inputSlideInput);
-                
+
                 var opacityPercentTextDiv = document.createElement('div');
                 opacityPercentTextDiv.id = "opacityPercentTextDiv"
                 opacityPercentText = document.createTextNode('40%');
@@ -337,13 +338,13 @@
                         geojson.setStyle({
                             fillOpacity: e.target.value
                         });
-                        opacityPercentTextDiv.innerText = Math.round(e.target.value * 100.0) + "%"
+                    opacityPercentTextDiv.innerText = Math.round(e.target.value * 100.0) + "%"
                 });
 
                 // Add to title
                 document.getElementById('title').appendChild(inputSlideDiv);
 
-                function UpdateLayerStyle(selectionCol, incomeCol) {
+                function UpdateLayerStyle(selectionCol, incomeCol, opacityValue) {
                     geojson.setStyle(function (e) {
                         if (incomeCol === "median_income_(dollars)" || incomeCol === "mean_income_(dollars)") {
                             return {
@@ -351,7 +352,7 @@
                                 weight: 3,
                                 opacity: 1,
                                 color: 'white',
-                                fillOpacity: 0.4
+                                fillOpacity: opacityValue
                             }
                         } else if (incomeCol === 'total') {
                             return {
@@ -359,7 +360,7 @@
                                 weight: 3,
                                 opacity: 1,
                                 color: 'white',
-                                fillOpacity: 0.4
+                                fillOpacity: opacityValue
                             }
                         }
                         else {
@@ -368,7 +369,7 @@
                                 weight: 3,
                                 opacity: 1,
                                 color: 'white',
-                                fillOpacity: 0.4
+                                fillOpacity: opacityValue
                             }
                         }
                     });
@@ -379,7 +380,7 @@
                     if (selectionDiv.childNodes[1].value == 'GEOIDFQ') {
                         geojson.resetStyle();
                     } else {
-                        UpdateLayerStyle(selectionIncomeCol, selectionDiv.childNodes[1].value);
+                        UpdateLayerStyle(selectionIncomeCol, selectionDiv.childNodes[1].value, inputSlideInput.value);
                     }
                     map.addControl(legend);
                     return selectionIncomeCol
