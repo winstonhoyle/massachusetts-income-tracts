@@ -301,7 +301,7 @@
                 geojson = L.geoJSON(data,
                     {
                         onEachFeature: function onEachFeature(feature, layer) {
-                            popupString = '<strong>' + formatter.format(feature.properties[selectionIncomeCol]) + '</strong>'
+                            popupString = '<strong>' + feature.properties['GEOIDFQ'] + '</strong>'
                             layer.bindPopup(popupString);
                         }
                     }
@@ -327,6 +327,7 @@
                 inputSlideInput.style.width = "200px";
                 inputSlideDiv.appendChild(inputSlideInput);
 
+                // Text changes with slider
                 var opacityPercentTextDiv = document.createElement('div');
                 opacityPercentTextDiv.id = "opacityPercentTextDiv"
                 opacityPercentText = document.createTextNode('40%');
@@ -344,6 +345,7 @@
                 // Add to title
                 document.getElementById('title').appendChild(inputSlideDiv);
 
+                // Function to set style depending on variable
                 function UpdateLayerStyle(selectionCol, incomeCol, opacityValue) {
                     geojson.setStyle(function (e) {
                         if (incomeCol === "median_income_(dollars)" || incomeCol === "mean_income_(dollars)") {
@@ -375,34 +377,37 @@
                     });
                 }
 
+                // Event for when a selection is made
                 function handleChange(event) {
-                    selectionIncomeCol = selectionDiv.childNodes[1].value + "-" + selectionDiv.childNodes[0].value;
-                    if (selectionDiv.childNodes[1].value == 'GEOIDFQ') {
+                    incomeType = selectionDiv.childNodes[0].value
+                    incomeCol = selectionDiv.childNodes[1].value
+                    selectionIncomeCol = incomeCol + "-" + incomeType;
+                    if (incomeCol == 'GEOIDFQ') {
                         geojson.resetStyle();
                     } else {
-                        UpdateLayerStyle(selectionIncomeCol, selectionDiv.childNodes[1].value, inputSlideInput.value);
+                        UpdateLayerStyle(selectionIncomeCol, incomeCol, inputSlideInput.value);
                     }
+
+                    // Update pop up
+                    geojson.eachLayer(function (layer) {
+                        if (incomeCol === "median_income_(dollars)" || incomeCol === "mean_income_(dollars)") {
+                            console.log(formatter.format(layer.feature.properties[incomeCol]))
+                            popupString = '<strong>' + formatter.format(layer.feature.properties[selectionIncomeCol]) + '</strong>'
+                        } else if (incomeCol === 'total') {
+                            popupString = '<strong>' + layer.feature.properties[selectionIncomeCol] + '</strong>'
+                        } else if (incomeCol === 'GEOIDFQ') {
+                            popupString = '<strong>' + layer.feature.properties[incomeCol] + '</strong>'
+                            console.log(layer.feature.properties[incomeCol]);
+                        } else {
+                            popupString = '<strong>' + layer.feature.properties[selectionIncomeCol] + '%</strong>'
+                        }
+                        layer.bindPopup(popupString);
+                    });
+
                     map.addControl(legend);
                     return selectionIncomeCol
                 }
                 selectionDiv.addEventListener('change', handleChange);
-
-                function changePopup(e) {
-                    popupString = handleChange(e)
-                    if (incomeCol === "median_income_(dollars)" || incomeCol === "mean_income_(dollars)") {
-                        popupString = '<strong>' + formatter.format(e.layer.feature.properties[popupString]) + '</strong>'
-                    } else if (incomeCol === 'total') {
-                        popupString = '<strong>' + e.layer.feature.properties[popupString] + '</strong>'
-                    } else if (incomeCol === 'GEOIDFQ') {
-                        popupString = '<strong>' + e.layer.feature.properties["GEOIDFQ"] + '</strong>'
-                    } else {
-                        popupString = '<strong>' + e.layer.feature.properties[popupString] + '%</strong>'
-                    }
-                    e.layer.bindPopup(popupString);
-                    e.layer.setStyle();
-                }
-
-                geojson.on('click', changePopup);
 
             });
 
