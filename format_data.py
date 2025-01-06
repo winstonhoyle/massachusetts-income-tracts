@@ -17,7 +17,7 @@ def format_num(input_val):
 
 
 # Open income data
-income_df = pd.read_csv('data/ACSST5Y2023.S1901_2025-01-04T212432/ACSST5Y2023.S1901-Data.csv')
+income_df = pd.read_csv('data/ACSST5Y2023.S1901_2025-01-06T030207/ACSST5Y2023.S1901-Data.csv')
 
 # Format columns
 output_cols = {}
@@ -51,7 +51,7 @@ for column in output_cols.values():
 income_df = income_df.rename(columns={'Geography': 'GEOIDFQ'})
 
 # Open Tract file
-census_track_gdf = gpd.read_file('data/tl_2024_25_tract/tl_2024_25_tract.shp')
+census_track_gdf = gpd.read_file('data/tl_2023_25_tract/tl_2023_25_tract.shp')
 census_track_gdf = census_track_gdf[['geometry', 'GEOIDFQ']]
 
 # Output

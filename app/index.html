@@ -186,7 +186,8 @@
             const incomeCols = [];
             const incomeTypes = [];
             var selectionIncomeCol = "GEOIDFQ";
-            var popupString = ""
+            var popupString = "";
+            title = document.getElementById('title');
             var selectionDiv;
 
             $.getJSON(tract_uri, function (data) {
@@ -275,7 +276,7 @@
                 }
 
                 function handleChange(event) {
-
+                    console.log(event);
                     if (selectionDiv.childNodes[1].value === "GEOIDFQ") {
                         selectionIncomeCol = selectionDiv.childNodes[1].value
                     } else {
@@ -285,7 +286,7 @@
                     }
                     return selectionIncomeCol
                 }
-                selectionDiv.addEventListener('change', handleChange)
+                selectionDiv.addEventListener('change', handleChange);
 
                 function changePopup(e) {
                     popupString = handleChange(e)
@@ -296,11 +297,11 @@
                     } else {
                         popupString = '<strong>' + e.layer.feature.properties[popupString] + '%</strong>'
                     }
-                    e.layer.bindPopup(popupString)
-                    e.layer.setStyle()
+                    e.layer.bindPopup(popupString);
+                    e.layer.setStyle();
                 }
 
-                geojson.on('click', changePopup)
+                geojson.on('click', changePopup);
 
             });
 
