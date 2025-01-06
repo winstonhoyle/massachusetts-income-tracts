@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Massachusetts Income By Census Tract</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- Make sure you put this AFTER Leaflet's CSS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <style>
+        #dropdownDiv {
+            position: absolute;
+            /* Use absolute positioning */
+            top: 0;
+            /* Position at the top of the page */
+            right: 10;
+            /* Align to the right */
+            width: 100%;
+            /* Make the div full width (optional) */
+            padding: 10px;
+            /* Add some padding */
+            background-color: #f9f9f9;
+            /* Background for visibility */
+            border-bottom: 1px solid #ccc;
+            /* Add a border at the bottom */
+            z-index: 1000;
+            /* Ensure it is above other content */
+        }
+    </style>
+</head>
+<style>
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    #map {
+        position: relative;
+        height: 100%;
+        width: 100%;
+    }
+
+    .overlay {
+        position: absolute;
+        background: white;
+        z-index: 1000;
+        border: double;
+        padding: 10px;
+    }
+
+    .info {
+        padding: 6px 8px;
+        font: 14px/16px Arial, Helvetica, sans-serif;
+        background: white;
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        border-radius: 5px;
+    }
+
+    .legend {
+        text-align: left;
+        line-height: 18px;
+        color: #555;
+        clear: both;
+    }
+
+    .legend i {
+        width: 18px;
+        height: 18px;
+        float: left;
+        margin-right: 8px;
+        opacity: 1;
+    }
+
+    #selections {
+        position: relative;
+        float: right;
+        margin-top: 25px;
+        margin-bottom: 25px;
+        margin-right: 25px;
+        margin-left: 25px;
+    }
+
+    #title {
+        margin-top: 25px;
+        margin-bottom: 25px;
+        margin-right: 25px;
+        margin-left: 25px;
+    }
+</style>
+
+<body>
+    <div id="map">
+
+        <script>
+
+            function getColorMoney(d) {
+                return d > 250000 ? '#443a82' :
+                    d > 200000 ? '#31688e' :
+                        d > 150000 ? '#21908d' :
+                            d > 100000 ? '#35b779' :
+                                d > 50000 ? '#8fd744' :
+                                    d > 0 ? '#fde725' :
+                                        '#faffff';
+            }
+            const map = L.map('map').setView([42.3601, -71.0589], 13);
+            const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
+            const tract_uri = "https://raw.githubusercontent.com/winstonhoyle/massachusetts-income-tracts/main/app/mass.geojson"
+
+            const incomeCols = [];
+            const incomeTypes = [];
+            var selectionIncomeCol = "GEOIDFQ";
+            var popupString = ""
+            var selectionDiv;
+
+            $.getJSON(tract_uri, function (data) {
+                properties = data.features[0].properties
+
+                Object.keys(properties).forEach(key => {
+                    const parts = key.split('-'); // Logs each key
+
+                    if (!incomeTypes.includes(parts[1])) {
+                        incomeTypes.push(parts[1]);
+                    }
+                    if (!incomeCols.includes(parts[0])) {
+                        incomeCols.push(parts[0]);
+                    }
+                });
+
+                // Create a div element
+                document.createElement('div')
+                selectionDiv = document.createElement('div');
+                selectionDiv.id = 'dropdownDiv'
+                const selectIncomeType = document.createElement('select');
+                const selectIncomeCols = document.createElement('select');
+
+                // Populate the select element with options
+                incomeTypes.forEach(incomeType => {
+                    const option = document.createElement('option');
+                    option.value = incomeType; // Set the value of the option
+                    option.textContent = incomeType; // Set the text to display
+                    selectIncomeType.appendChild(option); // Add the option to the select element
+                });
+
+                // Populate the select element with options
+                incomeCols.forEach(incomeCol => {
+                    const option = document.createElement('option');
+                    option.value = incomeCol; // Set the value of the option
+                    option.textContent = incomeCol; // Set the text to display
+                    selectIncomeCols.appendChild(option); // Add the option to the select element
+                });
+
+                // Add div to document
+                // TODO Show above map
+                selectionDiv.appendChild(selectIncomeType);
+                selectionDiv.appendChild(selectIncomeCols);
+                document.body.appendChild(selectionDiv);
+
+                geojson = L.geoJSON(data,
+                    {
+                        onEachFeature: function onEachFeature(feature, layer) {
+                            popupString = '<strong>' + feature.properties[selectionIncomeCol] + '</strong>'
+                            layer.bindPopup(popupString);
+                        }
+                    }
+                ).addTo(map);
+
+                function UpdateLayerStyle(selectionCol) {
+                    geojson.setStyle(function (e) {
+                        return {
+                            fillColor: getColorMoney(e.properties[selectionCol]),
+                            weight: 2,
+                            opacity: 1,
+                            color: 'white',
+                            dashArray: '3',
+                            fillOpacity: 0.5
+                        }
+                    }
+                    );
+                }
+
+                function handleChange(event) {
+
+                    if (selectionDiv.childNodes[1].value === "GEOIDFQ") {
+                        selectionIncomeCol = selectionDiv.childNodes[1].value
+                    } else {
+                        selectionIncomeCol = selectionDiv.childNodes[1].value + "-" + selectionDiv.childNodes[0].value;
+                        UpdateLayerStyle(selectionIncomeCol);
+                    }
+                    return selectionIncomeCol
+                }
+                selectionDiv.addEventListener('change', handleChange)
+
+                function changePopup(e) {
+                    popupString = handleChange(e)
+                    popupString = '<strong>' + e.layer.feature.properties[popupString] + '</strong>'
+                    e.layer.bindPopup(popupString)
+                    e.layer.setStyle()
+                }
+
+                geojson.on('click', changePopup)
+
+            });
+
+        </script>
+        <div class="overlay" id="title">
+            <center>
+                <h1>Massachusetts Income By Census Tract</h1>
+                <h4>Version: 0.0.1</h4>
+                <h3>GitHub: <a href="https://github.com/winstonhoyle/massachusetts-income-tracts">Massachusetts Income
+                        By Census Tract</a></h3>
+            </center>
+        </div>
+    </div>
+</body>
+
+</html>

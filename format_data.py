@@ -28,7 +28,7 @@ for col in list(income_df.iloc[0])[2:-2]:
     else:
         output_cols[
             col
-        ] = f'{col_split[-1].strip().lower().replace(" ", "_").replace("$", "")}_{col_split[1]}'
+        ] = f'{col_split[-1].strip().lower().replace(" ", "_").replace("$", "")}-{col_split[1].lower().replace("-", "_").replace(" ", "_")}'
 
 # Set labels
 income_df.columns = income_df.iloc[0]
@@ -43,6 +43,7 @@ for column in output_cols.values():
     income_df[column] = income_df[column].apply(lambda value: format_num(value))
 
 income_df = income_df.rename(columns={'Geography': 'GEOIDFQ'})
+income_df = income_df[income_df.columns[:14]]
 
 # Open Tract file
 census_track_gdf = gpd.read_file('data/tl_2024_25_tract/tl_2024_25_tract.shp')
@@ -52,4 +53,5 @@ census_track_gdf = census_track_gdf[['geometry', 'GEOIDFQ']]
 census_track_with_income_information = census_track_gdf.merge(
     income_df, on='GEOIDFQ', how='inner'
 )
-census_track_with_income_information.to_file('data/mass.geojson')
+census_track_with_income_information = census_track_with_income_information.to_crs(4326)
+census_track_with_income_information.to_file('app/mass.geojson')
