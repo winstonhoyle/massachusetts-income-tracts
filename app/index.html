@@ -98,6 +98,7 @@
                 Tract</a></h1>
     </center>
 </div>
+
 <body>
     <div id="map">
 
@@ -105,13 +106,14 @@
 
             function getPercent(d) {
                 return d === null ? '#ffffff' :
-                d > 50.0 ? '#443a82' :
-                    d > 40.0 ? '#31688e' :
-                        d > 30.0 ? '#21908d' :
-                            d > 20.0 ? '#35b779' :
-                                d > 10.0 ? '#8fd744' :
-                                    d >= 0.0 ? '#fde725' :
-                                        '#faffff';
+                    d == 0 ? '#ffffff' :
+                        d >= 50.0 ? '#443a82' :
+                            d >= 40.0 ? '#31688e' :
+                                d >= 30.0 ? '#21908d' :
+                                    d >= 20.0 ? '#35b779' :
+                                        d >= 10.0 ? '#8fd744' :
+                                            d >= 0.0 ? '#fde725' :
+                                                '#faffff';
             }
 
             function getTotals(d) {
@@ -149,14 +151,14 @@
                         labels.push(item);
                     }
                 } else if (incomeCol === "total") {
-                    totalBreaks = [2500, 2000, 1500, 1000, 500, 0]
+                    totalBreaks = [2500, 2000, 1500, 1000, 500, 1]
                     labels = [];
                     for (var i = 0; i < totalBreaks.length; i++) {
                         item = '<i style="background:' + getTotals(totalBreaks[i]) + ';"></i> ' + totalBreaks[i] + "+";
                         labels.push(item);
                     }
                 } else {
-                    percentBreaks = [50.0, 40.0, 30.0, 20.0, 10.0, 0.0]
+                    percentBreaks = [50.0, 40.0, 30.0, 20.0, 10.0, 0.1]
                     labels = [];
                     for (var i = 0; i < percentBreaks.length; i++) {
                         item = '<i style="background:' + getPercent(percentBreaks[i]) + ';"></i> ' + percentBreaks[i] + "%+";
@@ -303,7 +305,7 @@
             });
 
         </script>
-        
+
     </div>
 </body>
 
