@@ -250,11 +250,15 @@
                         var layerFound = false;
                         postcodesLayer.eachLayer(function (layer) {
                             if (layer.feature.properties.POSTCODE == zipCodeInput) {
+
+                                // remove zipcode Layer if exists
                                 if (zipLayer) {
                                     map.removeLayer(zipLayer);
                                 }
+
+                                // Found Zip!
                                 zipLayer = layer;
-                                map.fitBounds(zipLayer.getBounds(), {animate: false});
+                                map.fitBounds(zipLayer.getBounds(), { animate: false });
                                 zipLayer.setStyle({
                                     weight: 5,
                                     color: "black",
@@ -384,9 +388,8 @@
                         }
                         layer.bindPopup(popupString);
                     });
-
                     map.addControl(legend);
-                    return selectionIncomeCol
+                    map.fitBounds(map.getBounds());
                 }
                 selectionDiv.addEventListener('change', handleChange);
 
