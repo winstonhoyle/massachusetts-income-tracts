@@ -186,16 +186,21 @@
 
             const incomeCols = [];
             const incomeTypes = [];
+            var zipLayer;
             var selectionIncomeCol = "GEOIDFQ";
             var popupString = "";
             title = document.getElementById('title');
             var selectionDiv;
 
             // this layer is for the search function
-            var postcodes_layer;
+            var postcodesLayer;
             $.getJSON(postcodes_uri, function (data) {
-                postcodes_layer = L.geoJSON(data);
+                postcodesLayer = L.geoJSON(data, {
+                    interactive: false
+                }
+                );
             });
+
 
             $.getJSON(tract_uri, function (data) {
                 properties = data.features[0].properties
@@ -238,18 +243,52 @@
 
                 const input = document.createElement("input");
                 input.setAttribute("type", "text");
+                input.setAttribute("placeholder", 'Search A Zip Code');
                 input.addEventListener('keyup', function (e) {
                     if (e.key === 'Enter' || e.keyCode === 13) {
-                        const layerFound = false;
-                        postcodes_layer.eachLayer(function (layer) {
+                        var layerFound = false;
+                        postcodesLayer.eachLayer(function (layer) {
                             if (layer.feature.properties.POSTCODE == e.target.value) {
-                                map.fitBounds(layer.getBounds());
+                                if (zipLayer) {
+                                    map.removeLayer(zipLayer);
+                                }
+                                zipLayer = layer;
+                                map.fitBounds(zipLayer.getBounds());
+                                zipLayer.setStyle({
+                                    weight: 10,
+                                    color: "black",
+                                    opacity: '1',
+                                    fillOpacity: 0
+                                });
+                                zipLayer.addTo(map);
                                 layerFound = true;
                             }
+
                         });
                         if (layerFound == false) {
                             alert('Zip Not Found!');
                         }
+                    } else if (e.target.value == '') {
+                        if (zipLayer) {
+                            map.removeLayer(zipLayer);
+                        }
+                    } else if (e.target.value.length == 5) {
+                        postcodesLayer.eachLayer(function (layer) {
+                            if (layer.feature.properties.POSTCODE == e.target.value) {
+                                if (zipLayer) {
+                                    map.removeLayer(zipLayer);
+                                }
+                                zipLayer = layer;
+                                map.fitBounds(zipLayer.getBounds());
+                                zipLayer.setStyle({
+                                    weight: 10,
+                                    color: "black",
+                                    opacity: '1',
+                                    fillOpacity: 0
+                                });
+                                zipLayer.addTo(map);
+                            }
+                        });
                     }
                 });
 
