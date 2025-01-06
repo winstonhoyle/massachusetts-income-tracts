@@ -245,15 +245,16 @@
                 input.setAttribute("type", "text");
                 input.setAttribute("placeholder", 'Search A Zip Code');
                 input.addEventListener('keyup', function (e) {
+                    var zipCodeInput = e.target.value
                     if (e.key === 'Enter' || e.keyCode === 13) {
                         var layerFound = false;
                         postcodesLayer.eachLayer(function (layer) {
-                            if (layer.feature.properties.POSTCODE == e.target.value) {
+                            if (layer.feature.properties.POSTCODE == zipCodeInput) {
                                 if (zipLayer) {
                                     map.removeLayer(zipLayer);
                                 }
                                 zipLayer = layer;
-                                map.fitBounds(zipLayer.getBounds());
+                                map.fitBounds(zipLayer.getBounds(), {animate: false});
                                 zipLayer.setStyle({
                                     weight: 5,
                                     color: "black",
@@ -263,32 +264,14 @@
                                 zipLayer.addTo(map);
                                 layerFound = true;
                             }
-
                         });
                         if (layerFound == false) {
                             alert('Zip Not Found!');
                         }
-                    } else if (e.target.value == '') {
+                    } else if (zipCodeInput == '') {
                         if (zipLayer) {
                             map.removeLayer(zipLayer);
                         }
-                    } else if (e.target.value.length == 5) {
-                        postcodesLayer.eachLayer(function (layer) {
-                            if (layer.feature.properties.POSTCODE == e.target.value) {
-                                if (zipLayer) {
-                                    map.removeLayer(zipLayer);
-                                }
-                                zipLayer = layer;
-                                map.fitBounds(zipLayer.getBounds());
-                                zipLayer.setStyle({
-                                    weight: 5,
-                                    color: "black",
-                                    opacity: '1',
-                                    fillOpacity: 0
-                                });
-                                zipLayer.addTo(map);
-                            }
-                        });
                     }
                 });
 
