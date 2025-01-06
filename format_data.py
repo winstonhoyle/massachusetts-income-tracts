@@ -21,9 +21,15 @@ income_df = pd.read_csv('data/ACSST5Y2023.S1901_2025-01-04T212432/ACSST5Y2023.S1
 
 # Format columns
 output_cols = {}
-for col in list(income_df.iloc[0])[2:-2]:
+for col in list(income_df.iloc[0])[2:-1]:
     col_split = col.split('!!')
     if col_split[0] == 'Margin of Error':
+        continue
+    elif col_split[-1] in [
+        'Household income in the past 12 months',
+        'Family income in the past 12 months',
+        'Nonfamily income in the past 12 months',
+    ]:
         continue
     else:
         output_cols[
@@ -43,7 +49,6 @@ for column in output_cols.values():
     income_df[column] = income_df[column].apply(lambda value: format_num(value))
 
 income_df = income_df.rename(columns={'Geography': 'GEOIDFQ'})
-income_df = income_df[income_df.columns[:14]]
 
 # Open Tract file
 census_track_gdf = gpd.read_file('data/tl_2024_25_tract/tl_2024_25_tract.shp')

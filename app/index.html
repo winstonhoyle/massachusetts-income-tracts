@@ -13,14 +13,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js"></script>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <style>
-        #dropdownDiv {
-            position: absolute;
+        #selectionDiv {
+            position: relative;
             /* Use absolute positioning */
             top: 0;
-            /* Position at the top of the page */
-            right: 10;
-            /* Align to the right */
-            width: 100%;
             /* Make the div full width (optional) */
             padding: 10px;
             /* Add some padding */
@@ -96,22 +92,89 @@
         margin-left: 25px;
     }
 </style>
-
+<div class="overlay" id="title">
+    <center>
+        <h1><a href="https://github.com/winstonhoyle/massachusetts-income-tracts">Massachusetts Income By Census
+                Tract</a></h1>
+    </center>
+</div>
 <body>
     <div id="map">
 
         <script>
 
-            function getColorMoney(d) {
-                return d > 250000 ? '#443a82' :
-                    d > 200000 ? '#31688e' :
-                        d > 150000 ? '#21908d' :
-                            d > 100000 ? '#35b779' :
-                                d > 50000 ? '#8fd744' :
-                                    d > 0 ? '#fde725' :
+            function getPercent(d) {
+                return d === null ? '#ffffff' :
+                d > 50.0 ? '#443a82' :
+                    d > 40.0 ? '#31688e' :
+                        d > 30.0 ? '#21908d' :
+                            d > 20.0 ? '#35b779' :
+                                d > 10.0 ? '#8fd744' :
+                                    d >= 0.0 ? '#fde725' :
                                         '#faffff';
             }
-            const map = L.map('map').setView([42.3601, -71.0589], 13);
+
+            function getTotals(d) {
+                return d >= 2500 ? '#443a82' :
+                    d >= 2000 ? '#31688e' :
+                        d >= 1500 ? '#21908d' :
+                            d >= 1000 ? '#35b779' :
+                                d >= 500 ? '#8fd744' :
+                                    d >= 1 ? '#fde725' :
+                                        '#faffff';
+            }
+
+            function getColorMoney(d) {
+                return d >= 250000 ? '#443a82' :
+                    d >= 200000 ? '#31688e' :
+                        d >= 150000 ? '#21908d' :
+                            d >= 100000 ? '#35b779' :
+                                d >= 50000 ? '#8fd744' :
+                                    d >= 1 ? '#fde725' :
+                                        '#faffff';
+            }
+
+            // Create legend
+            var legend = L.control({ position: 'bottomright' });
+
+            // Legend to be added later in script
+            legend.onAdd = function (map) {
+                var div = L.DomUtil.create('div', 'info legend');
+                incomeCol = document.getElementById("selectionDiv").childNodes[1].value;
+                if (incomeCol === "median_income_(dollars)" || incomeCol === "mean_income_(dollars)") {
+                    moneyBreaks = [250000, 200000, 150000, 100000, 50000, 1]
+                    labels = [];
+                    for (var i = 0; i < moneyBreaks.length; i++) {
+                        item = '<i style="background:' + getColorMoney(moneyBreaks[i]) + ';"></i>' + formatter.format(moneyBreaks[i]) + "+";
+                        labels.push(item);
+                    }
+                } else if (incomeCol === "total") {
+                    totalBreaks = [2500, 2000, 1500, 1000, 500, 0]
+                    labels = [];
+                    for (var i = 0; i < totalBreaks.length; i++) {
+                        item = '<i style="background:' + getTotals(totalBreaks[i]) + ';"></i> ' + totalBreaks[i] + "+";
+                        labels.push(item);
+                    }
+                } else {
+                    percentBreaks = [50.0, 40.0, 30.0, 20.0, 10.0, 0.0]
+                    labels = [];
+                    for (var i = 0; i < percentBreaks.length; i++) {
+                        item = '<i style="background:' + getPercent(percentBreaks[i]) + ';"></i> ' + percentBreaks[i] + "%+";
+                        labels.push(item);
+                    }
+                }
+
+                div.innerHTML = labels.join('<br>');
+                return div;
+            };
+
+            const formatter = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                trailingZeroDisplay: 'stripIfInteger'
+            });
+
+            const map = L.map('map', { zoomControl: false }).setView([42.3601, -71.0589], 13);
             const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -141,7 +204,7 @@
                 // Create a div element
                 document.createElement('div')
                 selectionDiv = document.createElement('div');
-                selectionDiv.id = 'dropdownDiv'
+                selectionDiv.id = 'selectionDiv'
                 const selectIncomeType = document.createElement('select');
                 const selectIncomeCols = document.createElement('select');
 
@@ -165,29 +228,48 @@
                 // TODO Show above map
                 selectionDiv.appendChild(selectIncomeType);
                 selectionDiv.appendChild(selectIncomeCols);
-                document.body.appendChild(selectionDiv);
+                document.getElementById('title').appendChild(selectionDiv);
 
                 geojson = L.geoJSON(data,
                     {
                         onEachFeature: function onEachFeature(feature, layer) {
-                            popupString = '<strong>' + feature.properties[selectionIncomeCol] + '</strong>'
+                            popupString = '<strong>' + formatter.format(feature.properties[selectionIncomeCol]) + '</strong>'
                             layer.bindPopup(popupString);
                         }
                     }
                 ).addTo(map);
 
-                function UpdateLayerStyle(selectionCol) {
+                function UpdateLayerStyle(selectionCol, incomeCol) {
                     geojson.setStyle(function (e) {
-                        return {
-                            fillColor: getColorMoney(e.properties[selectionCol]),
-                            weight: 2,
-                            opacity: 1,
-                            color: 'white',
-                            dashArray: '3',
-                            fillOpacity: 0.5
+                        if (incomeCol === "median_income_(dollars)" || incomeCol === "mean_income_(dollars)") {
+                            return {
+                                fillColor: getColorMoney(e.properties[selectionCol]),
+                                weight: 1,
+                                opacity: 1,
+                                color: 'white',
+                                dashArray: '4',
+                                fillOpacity: 0.4
+                            }
+                        } else if (incomeCol === 'total') {
+                            return {
+                                fillColor: getTotals(e.properties[selectionCol]),
+                                weight: 1,
+                                opacity: 1,
+                                color: 'white',
+                                dashArray: '4',
+                                fillOpacity: 0.4
+                            }
+                        } else {
+                            return {
+                                fillColor: getPercent(e.properties[selectionCol]),
+                                weight: 1,
+                                opacity: 1,
+                                color: 'white',
+                                dashArray: '4',
+                                fillOpacity: 0.4
+                            }
                         }
-                    }
-                    );
+                    });
                 }
 
                 function handleChange(event) {
@@ -196,7 +278,8 @@
                         selectionIncomeCol = selectionDiv.childNodes[1].value
                     } else {
                         selectionIncomeCol = selectionDiv.childNodes[1].value + "-" + selectionDiv.childNodes[0].value;
-                        UpdateLayerStyle(selectionIncomeCol);
+                        UpdateLayerStyle(selectionIncomeCol, selectionDiv.childNodes[1].value);
+                        map.addControl(legend);
                     }
                     return selectionIncomeCol
                 }
@@ -204,7 +287,13 @@
 
                 function changePopup(e) {
                     popupString = handleChange(e)
-                    popupString = '<strong>' + e.layer.feature.properties[popupString] + '</strong>'
+                    if (incomeCol === "median_income_(dollars)" || incomeCol === "mean_income_(dollars)") {
+                        popupString = '<strong>' + formatter.format(e.layer.feature.properties[popupString]) + '</strong>'
+                    } else if (incomeCol === 'total') {
+                        popupString = '<strong>' + e.layer.feature.properties[popupString] + '</strong>'
+                    } else {
+                        popupString = '<strong>' + e.layer.feature.properties[popupString] + '%</strong>'
+                    }
                     e.layer.bindPopup(popupString)
                     e.layer.setStyle()
                 }
@@ -214,14 +303,7 @@
             });
 
         </script>
-        <div class="overlay" id="title">
-            <center>
-                <h1>Massachusetts Income By Census Tract</h1>
-                <h4>Version: 0.0.1</h4>
-                <h3>GitHub: <a href="https://github.com/winstonhoyle/massachusetts-income-tracts">Massachusetts Income
-                        By Census Tract</a></h3>
-            </center>
-        </div>
+        
     </div>
 </body>
 
