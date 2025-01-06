@@ -255,7 +255,7 @@
                                 zipLayer = layer;
                                 map.fitBounds(zipLayer.getBounds());
                                 zipLayer.setStyle({
-                                    weight: 10,
+                                    weight: 5,
                                     color: "black",
                                     opacity: '1',
                                     fillOpacity: 0
@@ -281,7 +281,7 @@
                                 zipLayer = layer;
                                 map.fitBounds(zipLayer.getBounds());
                                 zipLayer.setStyle({
-                                    weight: 10,
+                                    weight: 5,
                                     color: "black",
                                     opacity: '1',
                                     fillOpacity: 0
@@ -307,34 +307,67 @@
                     }
                 ).addTo(map);
 
+                // div for opacity
+                var inputSlideDiv = document.createElement('div');
+                inputSlideDiv.setAttribute("display","inline");
+                inputSlideDiv.style.display = 'flex';
+
+                // text
+                var opacityText = document.createTextNode('Opacity');
+                opacityText.id = "opacity";
+                inputSlideDiv.appendChild(opacityText);
+                // input
+                var inputSlideInput = document.createElement('input');
+                inputSlideInput.id = 'opacitySlide';
+                inputSlideInput.type = "range";
+                inputSlideInput.min = 0;
+                inputSlideInput.max = 0.75;
+                inputSlideInput.step = 0.01;
+                inputSlideInput.value = 0.4;
+                inputSlideDiv.appendChild(inputSlideInput);
+                
+                var opacityPercentTextDiv = document.createElement('div');
+                opacityPercentTextDiv.id = "opacityPercentTextDiv"
+                opacityPercentText = document.createTextNode('40%');
+                opacityPercentTextDiv.appendChild(opacityPercentText);
+                inputSlideDiv.appendChild(opacityPercentTextDiv);
+
+                inputSlideInput.addEventListener('change', function updateOpacity(e) {
+                    if (geojson != undefined)
+                        geojson.setStyle({
+                            fillOpacity: e.target.value
+                        });
+                        opacityPercentTextDiv.innerText = Math.round(e.target.value * 100.0) + "%"
+                });
+
+                // Add to title
+                document.getElementById('title').appendChild(inputSlideDiv);
+
                 function UpdateLayerStyle(selectionCol, incomeCol) {
                     geojson.setStyle(function (e) {
                         if (incomeCol === "median_income_(dollars)" || incomeCol === "mean_income_(dollars)") {
                             return {
                                 fillColor: getColorMoney(e.properties[selectionCol]),
-                                weight: 1,
+                                weight: 3,
                                 opacity: 1,
                                 color: 'white',
-                                dashArray: '4',
                                 fillOpacity: 0.4
                             }
                         } else if (incomeCol === 'total') {
                             return {
                                 fillColor: getTotals(e.properties[selectionCol]),
-                                weight: 1,
+                                weight: 3,
                                 opacity: 1,
                                 color: 'white',
-                                dashArray: '4',
                                 fillOpacity: 0.4
                             }
                         }
                         else {
                             return {
                                 fillColor: getPercent(e.properties[selectionCol]),
-                                weight: 1,
+                                weight: 3,
                                 opacity: 1,
                                 color: 'white',
-                                dashArray: '4',
                                 fillOpacity: 0.4
                             }
                         }
