@@ -60,3 +60,9 @@ census_track_with_income_information = census_track_gdf.merge(
 )
 census_track_with_income_information = census_track_with_income_information.to_crs(4326)
 census_track_with_income_information.to_file('app/mass.geojson')
+
+# Output zip codes
+postcode_gdf = gpd.read_file('data/zipcodes_nt/ZIPCODES_NT_POLY.shp')
+postcode_gdf = postcode_gdf[['geometry', 'POSTCODE']]
+postcode_gdf = postcode_gdf.to_crs(4326)
+postcode_gdf.to_file('app/postcodes.geojson')
