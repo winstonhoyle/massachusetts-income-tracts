@@ -170,11 +170,36 @@
                 trailingZeroDisplay: 'stripIfInteger'
             });
 
-            const map = L.map('map', { zoomControl: false }).setView([42.3601, -71.0589], 13);
-            const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            }).addTo(map);
+            })
+            var USGS_USImageryTopo = L.tileLayer('https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryTopo/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 20,
+                attribution: 'Tiles courtesy of the <a href="https://usgs.gov/">U.S. Geological Survey</a>'
+            });
+            var Esri_WorldGrayCanvas = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+                maxZoom: 19
+            });
+            var osmHOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap contributors, Tiles style by Humanitarian OpenStreetMap Team hosted by OpenStreetMap France'
+            });
+
+            var baseMaps = {
+                "OpenStreetMap": osm,
+                "USGS Imagery": USGS_USImageryTopo,
+                "Esri Gray": Esri_WorldGrayCanvas,
+                "OpenStreetMap.HOT": osmHOT
+            };
+
+            const map = L.map('map', {
+                layers: [osm],
+                zoomControl: false
+            }).setView([42.3601, -71.0589], 13);
+            var layerControl = L.control.layers(baseMaps, null, { position: 'bottomleft' }).addTo(map);
+
             const tract_uri = "https://raw.githubusercontent.com/winstonhoyle/massachusetts-income-tracts/main/app/mass.geojson"
             const postcodes_uri = "https://raw.githubusercontent.com/winstonhoyle/massachusetts-income-tracts/main/app/postcodes.geojson"
 
