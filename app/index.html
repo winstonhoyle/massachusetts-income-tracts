@@ -391,13 +391,11 @@
                     // Update pop up
                     geojson.eachLayer(function (layer) {
                         if (incomeCol === "median_income_(dollars)" || incomeCol === "mean_income_(dollars)") {
-                            console.log(formatter.format(layer.feature.properties[incomeCol]))
                             popupString = '<strong>' + formatter.format(layer.feature.properties[selectionIncomeCol]) + '</strong>'
                         } else if (incomeCol === 'total') {
                             popupString = '<strong>' + layer.feature.properties[selectionIncomeCol] + '</strong>'
                         } else if (incomeCol === 'GEOIDFQ') {
                             popupString = '<strong>' + layer.feature.properties[incomeCol] + '</strong>'
-                            console.log(layer.feature.properties[incomeCol]);
                         } else {
                             popupString = '<strong>' + layer.feature.properties[selectionIncomeCol] + '%</strong>'
                         }
