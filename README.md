@@ -1,7 +1,7 @@
-## California Income By Census Tract (2023)
+## Los Angeles Income By Census Tract (2023)
 
 A simple webmapping application to show different categories of income data by census tract. The map is a static html file using the data process below.
-[Try Me!](https://raw.githack.com/winstonhoyle/massachusetts-income-tracts/main/app/index.html)
+[Try Me!](https://raw.githack.com/winstonhoyle/massachusetts-income-tracts/california/app/index.html)
 
 ## Data
 * [2023 Census Tracts](https://www.census.gov/cgi-bin/geo/shapefiles/index.php?year=2023&layergroup=Census+Tracts)
