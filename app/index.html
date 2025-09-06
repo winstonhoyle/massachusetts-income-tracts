@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
-    <title>Massachusetts Income By Census Tract</title>
+    <title>California Income By Census Tract</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <!-- Make sure you put this AFTER Leaflet's CSS -->
@@ -87,7 +87,7 @@
 </style>
 <div class="overlay" id="title">
     <center>
-        <h1><a href="https://github.com/winstonhoyle/massachusetts-income-tracts">Massachusetts Income By Census
+        <h1><a href="https://github.com/winstonhoyle/massachusetts-income-tracts/tree/california">California Income By Census
                 Tract</a></h1>
     </center>
 </div>
@@ -197,11 +197,11 @@
             const map = L.map('map', {
                 layers: [osm],
                 zoomControl: false
-            }).setView([42.3601, -71.0589], 13);
+            }).setView([34.00735975473687, -118.39090439869385], 13);
             var layerControl = L.control.layers(baseMaps, null, { position: 'bottomleft' }).addTo(map);
 
-            const tract_uri = "https://raw.githubusercontent.com/winstonhoyle/massachusetts-income-tracts/main/app/mass.geojson"
-            const postcodes_uri = "https://raw.githubusercontent.com/winstonhoyle/massachusetts-income-tracts/main/app/postcodes.geojson"
+            const tract_uri = "https://github.com/winstonhoyle/massachusetts-income-tracts/blob/california/app/california.geojson"
+            const postcodes_uri = "https://github.com/winstonhoyle/massachusetts-income-tracts/blob/california/app/postcodes_california.geojson"
 
             const incomeCols = [];
             const incomeTypes = [];
@@ -269,7 +269,7 @@
                     if (e.key === 'Enter' || e.keyCode === 13) {
                         var layerFound = false;
                         postcodesLayer.eachLayer(function (layer) {
-                            if (layer.feature.properties.POSTCODE == zipCodeInput) {
+                            if (layer.feature.properties.ZIP_CODE == zipCodeInput) {
 
                                 // remove zipcode Layer if exists
                                 if (zipLayer) {
