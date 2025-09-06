@@ -51,7 +51,7 @@ for column in output_cols.values():
 income_df = income_df.rename(columns={'Geography': 'GEOIDFQ'})
 
 # Open Tract file
-census_track_gdf = gpd.read_file('data/tl_2023_25_tract/tl_2023_25_tract.shp')
+census_track_gdf = gpd.read_file('data/tl_2023_06_tract/tl_2023_06_tract.shp')
 census_track_gdf = census_track_gdf[['geometry', 'GEOIDFQ']]
 
 # Output
@@ -59,10 +59,10 @@ census_track_with_income_information = census_track_gdf.merge(
     income_df, on='GEOIDFQ', how='inner'
 )
 census_track_with_income_information = census_track_with_income_information.to_crs(4326)
-census_track_with_income_information.to_file('app/mass.geojson')
+census_track_with_income_information.to_file('app/california.geojson')
 
 # Output zip codes
-postcode_gdf = gpd.read_file('data/zipcodes_nt/ZIPCODES_NT_POLY.shp')
-postcode_gdf = postcode_gdf[['geometry', 'POSTCODE']]
+postcode_gdf = gpd.read_file('data/USA_ZIP_Code_Areas_anaylsis_9026204924980308708/zip_poly.shp')
+postcode_gdf = postcode_gdf[['geometry', 'ZIP_CODE']]
 postcode_gdf = postcode_gdf.to_crs(4326)
-postcode_gdf.to_file('app/postcodes.geojson')
+postcode_gdf.to_file('app/postcodes_california.geojson')
