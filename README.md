@@ -1,18 +1,39 @@
-## Massachusetts Income By Census Tract (2023)
+# Income by Census Tract
 
-A simple webmapping application to show different categories of income data by census tract. The map is a static html file using the data process below.
-[Try Me!](https://raw.githack.com/winstonhoyle/massachusetts-income-tracts/main/app/index.html)
+An interactive map of household and family income by census tract for Massachusetts and Los Angeles (Los Angeles and Orange counties), built from the Census Bureau's 2024 American Community Survey.
+
+[Live map](https://winstonhoyle.github.io/massachusetts-income-tracts/) · [Massachusetts](https://winstonhoyle.github.io/massachusetts-income-tracts/?region=massachusetts) · [Los Angeles](https://winstonhoyle.github.io/massachusetts-income-tracts/?region=los-angeles)
+
+![Median household income by census tract in Massachusetts](app/screenshot.png)
+
+## What it does
+
+The map colors about 4,700 census tracts by median income, mean income, total count, or the share of households in each of 10 income brackets. You can switch between households, families, married-couple families, and nonfamily households. Click a tract to see its value, or search a zip code to outline it. On a phone, the control panel starts collapsed so the map has room.
+
+## How it works
+
+| Part | What | File |
+| --- | --- | --- |
+| Data pipeline | A Python script using GeoPandas. It pulls ACS 5-year table S1901 from the Census API, joins it to TIGER/Line tract shapes, simplifies the geometry to about 5 m, and writes one GeoJSON file per region | [`format_data.py`](format_data.py) |
+| Map | A single static HTML page using Leaflet's canvas renderer, with no build step | [`app/index.html`](app/index.html) |
+| Hosting | GitHub Actions runs the tests, then deploys `app/` to GitHub Pages | [`.github/workflows/pages.yml`](.github/workflows/pages.yml) |
+
+Simplifying the shapes and rounding coordinates cut the Massachusetts data from 27 MB to 7.5 MB. The tract file is about 1 MB gzipped. Zip code outlines come from the 2020 ZIP Code Tabulation Areas and load in the background.
 
 ## Data
-* [2023 Census Tracts](https://www.census.gov/cgi-bin/geo/shapefiles/index.php?year=2023&layergroup=Census+Tracts)
-* [2023 Income in the Psat 12 Months (in 2023 Inflation-Adjusted Dollars)](https://data.census.gov/table?q=income&g=040XX00US25$1400000)
-* [Zip Codes](https://www.mass.gov/info-details/massgis-data-zip-codes-5-digit-from-here-navteq)
+* [ACS 2024 5-year, S1901: Income in the Past 12 Months](https://api.census.gov/data/2024/acs/acs5/subject/groups/S1901.html)
+* [2024 TIGER/Line Census Tracts](https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html)
+* [2020 ZIP Code Tabulation Areas](https://www.census.gov/geographies/mapping-files/time-series/geo/cartographic-boundary.2020.html)
 
-## Formatting the data
-Download the data then run [format_data.py](format_data.py). Follow these commands:
+## Running it
+
+You need Python 3.12 or later and a free [Census API key](https://api.census.gov/data/key_signup.html). Dependencies are listed in [`pyproject.toml`](pyproject.toml), and `make` creates `.venv` and installs them.
+
 ```
-python3.11 -m venv .venv
-source .venv/bin/activate
-python3.11 -m pip install -r requirements.txt
-python3.11 format_data.py
+cp .env.sample .env   # paste your key into .env
+make data             # rebuild app/<region>.json and app/<region>-zipcodes.json
+make serve            # http://localhost:8000
+make test             # pytest
 ```
+
+To add a region, add its state and county FIPS codes to `REGIONS` in `format_data.py` and its name to `REGIONS` in `app/index.html`, then run `make data`.

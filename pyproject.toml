@@ -1,0 +1,8 @@
+[project]
+name = "massachusetts-income-tracts"
+version = "2024.0"
+requires-python = ">=3.12"
+
+[dependency-groups]
+data = ["geopandas>=1.1"]
+test = [{ include-group = "data" }, "pytest>=9"]

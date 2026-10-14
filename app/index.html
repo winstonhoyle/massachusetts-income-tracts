@@ -1,424 +1,351 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width">
-    <title>Massachusetts Income By Census Tract</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Household and family income by census tract in Massachusetts and Los Angeles (ACS 2024 5-year).">
+    <link rel="icon" href="data:,">
+    <meta property="og:title" content="Income by Census Tract: Massachusetts and Los Angeles">
+    <meta property="og:description" content="Interactive map of household and family income by census tract (ACS 2024 5-year).">
+    <meta property="og:image" content="https://winstonhoyle.github.io/massachusetts-income-tracts/screenshot.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <title>Income By Census Tract</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <!-- Make sure you put this AFTER Leaflet's CSS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js"></script>
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <style>
+        :root {
+            --text: #1b1b1b;
+            --muted: #565c65;
+            --border: #dfe1e2;
+            --surface: #ffffff;
+            --primary: #005ea2;
+            --error: #b50909;
+        }
+
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+            font: 14px/1.4 system-ui, sans-serif;
+            color: var(--text);
+        }
+
+        #map {
+            height: 100%;
+        }
+
+        .panel {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            z-index: 1000;
+            width: 300px;
+            max-width: calc(100% - 76px); /* clear the zoom and layer buttons */
+            box-sizing: border-box;
+            padding: 14px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .panel summary {
+            cursor: pointer;
+        }
+
+        .panel h1 {
+            display: inline;
+            margin: 0;
+            font-size: 1.15rem;
+        }
+
+        .panel p {
+            margin: 2px 0 10px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .panel label {
+            display: block;
+            margin-top: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        .panel select,
+        .panel input[type=search] {
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 2px;
+            padding: 6px;
+            font: inherit;
+            border: 1px solid var(--muted);
+            border-radius: 4px;
+        }
+
+        .panel input[type=range] {
+            width: 100%;
+        }
+
+        .panel a {
+            color: var(--primary);
+        }
+
+        #status:not(:empty) {
+            margin-top: 8px;
+            color: var(--error);
+        }
+
+        .legend {
+            padding: 8px 10px;
+            background: var(--surface);
+            border-radius: 6px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+            line-height: 20px;
+        }
+
+        .legend strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .legend i {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            margin-right: 6px;
+            vertical-align: -3px;
+            border: 1px solid var(--border);
+        }
+    </style>
 </head>
-<style>
-    #selectionDiv {
-        position: flex;
-        top: 0;
-        padding: 10px;
-        background-color: #f9f9f9;
-        border-bottom: 1px solid #ccc;
-        z-index: 1000;
-    }
-
-    .opacityDiv {
-        display: flex;
-        top: 0;
-        padding: 10px;
-        background-color: #f9f9f9;
-        border-bottom: 1px solid #ccc;
-        z-index: 1000;
-    }
-
-    html,
-    body {
-        margin: 0;
-        padding: 0;
-        height: 100%;
-        overflow: hidden;
-    }
-
-    #map {
-        position: relative;
-        height: 100%;
-        width: 100%;
-    }
-
-    .overlay {
-        position: absolute;
-        background: white;
-        z-index: 1000;
-        border: double;
-        padding: 10px;
-    }
-
-    .info {
-        padding: 6px 8px;
-        font: 14px/16px Arial, Helvetica, sans-serif;
-        background: white;
-        background: rgba(255, 255, 255, 0.8);
-        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-        border-radius: 5px;
-    }
-
-    .legend {
-        text-align: left;
-        line-height: 18px;
-        color: #555;
-        clear: both;
-    }
-
-    .legend i {
-        width: 18px;
-        height: 18px;
-        float: left;
-        margin-right: 8px;
-        opacity: 1;
-    }
-
-    #title {
-        margin-top: 25px;
-        margin-bottom: 25px;
-        margin-right: 25px;
-        margin-left: 25px;
-    }
-</style>
-<div class="overlay" id="title">
-    <center>
-        <h1><a href="https://github.com/winstonhoyle/massachusetts-income-tracts">Massachusetts Income By Census
-                Tract</a></h1>
-    </center>
-</div>
 
 <body>
-    <div id="map">
+    <main class="panel">
+        <details open>
+        <summary><h1><span id="regionName"></span> Income by Census Tract</h1></summary>
+        <p>ACS 2024 5-year estimates (table S1901) · <a href="https://github.com/winstonhoyle/massachusetts-income-tracts">Source</a></p>
 
-        <script>
+        <label for="region">Region</label>
+        <select id="region"></select>
 
-            function getPercent(d) {
-                return d === null ? '#ffffff' :
-                    d == 0 ? '#ffffff' :
-                        d >= 50.0 ? '#443a82' :
-                            d >= 40.0 ? '#31688e' :
-                                d >= 30.0 ? '#21908d' :
-                                    d >= 20.0 ? '#35b779' :
-                                        d >= 10.0 ? '#8fd744' :
-                                            d >= 0.0 ? '#fde725' :
-                                                '#faffff';
+        <label for="incomeType">Who</label>
+        <select id="incomeType"></select>
+
+        <label for="incomeCol">Measure</label>
+        <select id="incomeCol"></select>
+
+        <form id="zipForm">
+            <label for="zipSearch">Zip code</label>
+            <input id="zipSearch" type="search" inputmode="numeric" pattern="\d{5}" maxlength="5"
+                placeholder="e.g. 02139, then Enter" autocomplete="postal-code">
+        </form>
+
+        <label for="opacitySlide">Fill opacity: <span id="opacityText">60%</span></label>
+        <input id="opacitySlide" type="range" min="0" max="1" step="0.05" value="0.6">
+        </details>
+
+        <div id="status" role="status">Loading tracts…</div>
+    </main>
+    <div id="map"></div>
+
+    <script>
+        // Viridis, darkest = highest
+        const COLORS = ['#443a82', '#31688e', '#21908d', '#35b779', '#8fd744', '#fde725'];
+        const NO_DATA = '#d9d9d9';
+        // Must match REGIONS in format_data.py
+        const REGIONS = { 'massachusetts': 'Massachusetts', 'los-angeles': 'Los Angeles' };
+        const params = new URLSearchParams(location.search);
+        const region = params.get('region') in REGIONS ? params.get('region') : 'massachusetts';
+        document.getElementById('regionName').textContent = REGIONS[region];
+        document.title = REGIONS[region] + ' Income by Census Tract';
+
+        const MONEY_COLS = ['median_income_(dollars)', 'mean_income_(dollars)'];
+        const MEASURE_LABELS = {
+            'median_income_(dollars)': 'Median income',
+            'mean_income_(dollars)': 'Mean income',
+            'total': 'Count'
+        };
+
+        const dollars = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+
+        // "10,000_to_14,999" -> "Earning $10,000 to $14,999 (%)"
+        function measureLabel(col) {
+            return MEASURE_LABELS[col] || 'Earning ' + col.replace(/_/g, ' ').replace(/[\d,]+/g, '$$$&') + ' (%)';
+        }
+
+        // "married_couple_families" -> "Married couple families"
+        function typeLabel(type) {
+            const s = type.replace(/_/g, ' ');
+            return s[0].toUpperCase() + s.slice(1);
+        }
+
+        // Breaks (descending) and value format for each kind of column
+        function scaleFor(incomeCol) {
+            if (MONEY_COLS.includes(incomeCol)) {
+                // The ACS top-codes medians and means at 250,001
+                return { breaks: [250000, 200000, 150000, 100000, 50000, 1], format: v => v > 250000 ? '$250,000+' : dollars.format(v) };
+            } else if (incomeCol === 'total') {
+                return { breaks: [2500, 2000, 1500, 1000, 500, 1], format: v => v.toLocaleString() };
             }
+            return { breaks: [50, 40, 30, 20, 10, 0.1], format: v => v + '%' };
+        }
 
-            function getTotals(d) {
-                return d >= 2500 ? '#443a82' :
-                    d >= 2000 ? '#31688e' :
-                        d >= 1500 ? '#21908d' :
-                            d >= 1000 ? '#35b779' :
-                                d >= 500 ? '#8fd744' :
-                                    d >= 1 ? '#fde725' :
-                                        '#faffff';
-            }
+        function colorFor(scale, d) {
+            if (d === null || d === undefined) return NO_DATA;
+            const i = scale.breaks.findIndex(b => d >= b);
+            return i === -1 ? NO_DATA : COLORS[i];
+        }
 
-            function getColorMoney(d) {
-                return d >= 250000 ? '#443a82' :
-                    d >= 200000 ? '#31688e' :
-                        d >= 150000 ? '#21908d' :
-                            d >= 100000 ? '#35b779' :
-                                d >= 50000 ? '#8fd744' :
-                                    d >= 1 ? '#fde725' :
-                                        '#faffff';
-            }
-
-            // Create legend
-            var legend = L.control({ position: 'bottomright' });
-
-            // Legend to be added later in script
-            legend.onAdd = function (map) {
-                map.fitBounds(map.getBounds());
-                var div = L.DomUtil.create('div', 'info legend');
-                incomeCol = document.getElementById("selectionDiv").childNodes[1].value;
-                if (incomeCol === "median_income_(dollars)" || incomeCol === "mean_income_(dollars)") {
-                    moneyBreaks = [250000, 200000, 150000, 100000, 50000, 1]
-                    labels = [];
-                    for (var i = 0; i < moneyBreaks.length; i++) {
-                        item = '<i style="background:' + getColorMoney(moneyBreaks[i]) + ';"></i>' + formatter.format(moneyBreaks[i]) + "+";
-                        labels.push(item);
-                    }
-                } else if (incomeCol === "total") {
-                    totalBreaks = [2500, 2000, 1500, 1000, 500, 1]
-                    labels = [];
-                    for (var i = 0; i < totalBreaks.length; i++) {
-                        item = '<i style="background:' + getTotals(totalBreaks[i]) + ';"></i> ' + totalBreaks[i] + "+";
-                        labels.push(item);
-                    }
-                } else {
-                    percentBreaks = [50.0, 40.0, 30.0, 20.0, 10.0, 0.1]
-                    labels = [];
-                    for (var i = 0; i < percentBreaks.length; i++) {
-                        item = '<i style="background:' + getPercent(percentBreaks[i]) + ';"></i> ' + percentBreaks[i] + "%+";
-                        labels.push(item);
-                    }
-                }
-
-                div.innerHTML = labels.join('<br>');
-                return div;
-            };
-
-            const formatter = new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'USD',
-                trailingZeroDisplay: 'stripIfInteger'
-            });
-
-            var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        const gray = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+            maxZoom: 16
+        });
+        const baseMaps = {
+            "Light gray": gray,
+            "OpenStreetMap": L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
-                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            })
-            var USGS_USImageryTopo = L.tileLayer('https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryTopo/MapServer/tile/{z}/{y}/{x}', {
-                maxZoom: 20,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }),
+            "Imagery": L.tileLayer('https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryTopo/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 16,
                 attribution: 'Tiles courtesy of the <a href="https://usgs.gov/">U.S. Geological Survey</a>'
+            })
+        };
+
+        // Canvas draws thousands of tracts much faster than SVG
+        const map = L.map('map', { layers: [gray], preferCanvas: true, zoomControl: false }).setView([39.8, -98.6], 4);
+        L.control.zoom({ position: 'topright' }).addTo(map);
+        L.control.layers(baseMaps, null, { position: 'topright' }).addTo(map);
+
+        if (innerWidth <= 700) document.querySelector('.panel details').open = false;
+
+        const selectRegion = document.getElementById('region');
+        Object.entries(REGIONS).forEach(([value, name]) => selectRegion.add(new Option(name, value, false, value === region)));
+        selectRegion.addEventListener('change', () => {
+            params.set('region', selectRegion.value);
+            location.search = params;
+        });
+
+        const selectIncomeType = document.getElementById('incomeType');
+        const selectIncomeCol = document.getElementById('incomeCol');
+        const zipSearch = document.getElementById('zipSearch');
+        const opacitySlide = document.getElementById('opacitySlide');
+        const opacityText = document.getElementById('opacityText');
+        const status = document.getElementById('status');
+
+        const legend = L.control({ position: 'bottomright' });
+        legend.onAdd = function () {
+            const div = L.DomUtil.create('div', 'legend');
+            const scale = scaleFor(selectIncomeCol.value);
+            div.innerHTML = '<strong>' + measureLabel(selectIncomeCol.value) + '</strong>' +
+                scale.breaks.map((b, i) => '<i style="background:' + COLORS[i] + '"></i>' + scale.format(b) + '+').join('<br>') +
+                '<br><i style="background:' + NO_DATA + '"></i>No data';
+            return div;
+        };
+
+        let tracts;
+        let postcodes;
+        let zipLayer;
+
+        function fetchJSON(url) {
+            return fetch(url).then(r => {
+                if (!r.ok) throw new Error(url + ': ' + r.status);
+                return r.json();
             });
-            var Esri_WorldGrayCanvas = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-                attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
-                maxZoom: 19
+        }
+
+        function selectedKey() {
+            return selectIncomeCol.value + '-' + selectIncomeType.value;
+        }
+
+        function popupHTML(layer) {
+            const value = layer.feature.properties[selectedKey()];
+            const text = value === null || value === undefined ? 'No data' : scaleFor(selectIncomeCol.value).format(value);
+            return '<strong>' + text + '</strong><br>' + measureLabel(selectIncomeCol.value) + ', ' +
+                selectIncomeType.selectedOptions[0].text.toLowerCase() + '<br><small>Tract ' + layer.feature.properties.GEOIDFQ.slice(9) + '</small>';
+        }
+
+        function render() {
+            const key = selectedKey();
+            const scale = scaleFor(selectIncomeCol.value);
+            const fillOpacity = Number(opacitySlide.value);
+            tracts.setStyle(feature => ({
+                color: '#ffffff',
+                weight: 0.5,
+                opacity: 0.8,
+                fillColor: colorFor(scale, feature.properties[key]),
+                fillOpacity
+            }));
+            legend.addTo(map); // re-adding rebuilds it for the new column
+            map.closePopup(); // an open popup would show the previous measure
+        }
+
+        fetchJSON(region + '.json').then(data => {
+            // Keys look like "median_income_(dollars)-households"
+            const incomeCols = new Set();
+            const incomeTypes = new Set();
+            Object.keys(data.features[0].properties).forEach(key => {
+                const [col, type] = key.split('-');
+                if (!type) return; // GEOIDFQ
+                incomeCols.add(col);
+                incomeTypes.add(type);
             });
-            var osmHOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '© OpenStreetMap contributors, Tiles style by Humanitarian OpenStreetMap Team hosted by OpenStreetMap France'
-            });
+            incomeTypes.forEach(t => selectIncomeType.add(new Option(typeLabel(t), t)));
+            incomeCols.forEach(c => selectIncomeCol.add(new Option(measureLabel(c), c)));
+            selectIncomeCol.value = 'median_income_(dollars)';
 
-            var baseMaps = {
-                "OpenStreetMap": osm,
-                "USGS Imagery": USGS_USImageryTopo,
-                "Esri Gray": Esri_WorldGrayCanvas,
-                "OpenStreetMap.HOT": osmHOT
-            };
+            tracts = L.geoJSON(data).bindPopup(popupHTML).addTo(map);
+            // Keep the region out from under the panel on wide screens
+            map.fitBounds(tracts.getBounds(), { paddingTopLeft: [innerWidth > 700 ? 320 : 0, 0] });
+            render();
+            status.textContent = '';
+        }).catch(err => {
+            status.textContent = 'Could not load tract data (' + err.message + ').';
+        });
 
-            const map = L.map('map', {
-                layers: [osm],
-                zoomControl: false
-            }).setView([42.3601, -71.0589], 13);
-            var layerControl = L.control.layers(baseMaps, null, { position: 'bottomleft' }).addTo(map);
+        // Only used by the zip search, so it loads in the background
+        const postcodesLoaded = fetchJSON(region + '-zipcodes.json').then(data => {
+            postcodes = L.geoJSON(data, { interactive: false });
+        });
 
-            const tract_uri = "https://raw.githubusercontent.com/winstonhoyle/massachusetts-income-tracts/main/app/mass.geojson"
-            const postcodes_uri = "https://raw.githubusercontent.com/winstonhoyle/massachusetts-income-tracts/main/app/postcodes.geojson"
+        selectIncomeType.addEventListener('change', render);
+        selectIncomeCol.addEventListener('change', render);
 
-            const incomeCols = [];
-            const incomeTypes = [];
-            var zipLayer;
-            var selectionIncomeCol = "GEOIDFQ";
-            var popupString = "";
-            title = document.getElementById('title');
-            var selectionDiv;
-            var opacityDiv;
+        opacitySlide.addEventListener('input', () => {
+            opacityText.textContent = Math.round(opacitySlide.value * 100) + '%';
+            if (tracts) tracts.setStyle({ fillOpacity: Number(opacitySlide.value) });
+        });
 
-            // this layer is for the search function
-            var postcodesLayer;
-            $.getJSON(postcodes_uri, function (data) {
-                postcodesLayer = L.geoJSON(data, {
-                    interactive: false
+        function clearZip() {
+            if (zipLayer) map.removeLayer(zipLayer);
+            zipLayer = null;
+            status.textContent = '';
+        }
+
+        zipSearch.addEventListener('input', () => { if (zipSearch.value === '') clearZip(); });
+        document.getElementById('zipForm').addEventListener('submit', e => {
+            e.preventDefault();
+            clearZip();
+            const zip = zipSearch.value.trim();
+            postcodesLoaded.then(() => {
+                const found = postcodes.getLayers().find(layer => layer.feature.properties.POSTCODE === zip);
+                if (!found) {
+                    status.textContent = 'Zip ' + zip + ' is not in ' + REGIONS[region] + '.';
+                    return;
                 }
-                );
-            });
-
-
-            $.getJSON(tract_uri, function (data) {
-                properties = data.features[0].properties
-
-                Object.keys(properties).forEach(key => {
-                    const parts = key.split('-');
-
-                    if (!incomeTypes.includes(parts[1])) {
-                        incomeTypes.push(parts[1]);
-                    }
-                    if (!incomeCols.includes(parts[0])) {
-                        incomeCols.push(parts[0]);
-                    }
-                });
-
-                incomeTypes.shift();
-
-                // Create a div element
-                document.createElement('div');
-                selectionDiv = document.createElement('div');
-                selectionDiv.id = 'selectionDiv';
-                const selectIncomeType = document.createElement('select');
-                const selectIncomeCols = document.createElement('select');
-
-                // Populate the select element with options
-                incomeTypes.forEach(incomeType => {
-                    const option = document.createElement('option');
-                    option.value = incomeType; // Set the value of the option
-                    option.textContent = incomeType; // Set the text to display
-                    selectIncomeType.appendChild(option); // Add the option to the select element
-                });
-
-                // Populate the select element with options
-                incomeCols.forEach(incomeCol => {
-                    const option = document.createElement('option');
-                    option.value = incomeCol; // Set the value of the option
-                    option.textContent = incomeCol; // Set the text to display
-                    selectIncomeCols.appendChild(option); // Add the option to the select element
-                });
-
-                const input = document.createElement("input");
-                input.setAttribute("type", "text");
-                input.setAttribute("placeholder", 'Search A Zip Code');
-                input.addEventListener('keyup', function (e) {
-                    var zipCodeInput = e.target.value
-                    if (e.key === 'Enter' || e.keyCode === 13) {
-                        var layerFound = false;
-                        postcodesLayer.eachLayer(function (layer) {
-                            if (layer.feature.properties.POSTCODE == zipCodeInput) {
-
-                                // remove zipcode Layer if exists
-                                if (zipLayer) {
-                                    map.removeLayer(zipLayer);
-                                }
-
-                                // Found Zip!
-                                zipLayer = layer;
-                                map.fitBounds(zipLayer.getBounds(), { animate: false });
-                                zipLayer.setStyle({
-                                    weight: 7,
-                                    color: "black",
-                                    dashArray: "10 10",
-                                    opacity: '1',
-                                    fillOpacity: 0
-                                });
-                                zipLayer.addTo(map);
-                                layerFound = true;
-                            }
-                        });
-                        if (layerFound == false) {
-                            alert('Zip Not Found!');
-                        }
-                    } else if (zipCodeInput == '') {
-                        if (zipLayer) {
-                            map.removeLayer(zipLayer);
-                        }
-                    }
-                });
-
-                // Add div to document
-                selectionDiv.appendChild(selectIncomeType);
-                selectionDiv.appendChild(selectIncomeCols);
-                selectionDiv.appendChild(input);
-                document.getElementById('title').appendChild(selectionDiv);
-
-                geojson = L.geoJSON(data,
-                    {
-                        onEachFeature: function onEachFeature(feature, layer) {
-                            popupString = '<strong>' + feature.properties['GEOIDFQ'] + '</strong>'
-                            layer.bindPopup(popupString);
-                        },
-                        style: { color: '#5a5a5a', weight: 3, fillColor: '#3388ff', fillOpacity: 0.5 }
-                    }
-                ).addTo(map);
-
-                // div for opacity
-                const opacityDiv = document.createElement('div');
-                opacityDiv.id = 'opacityDiv';
-                opacityDiv.className = 'opacityDiv'
-
-                // Input div
-                const opacitySlideDiv = document.createElement('div');
-                opacitySlideDiv.id = "opacitySlideDiv";
-                const inputSlideInput = document.createElement('input');
-                inputSlideInput.id = 'opacitySlide';
-                inputSlideInput.type = "range";
-                inputSlideInput.min = 0;
-                inputSlideInput.max = 0.75;
-                inputSlideInput.step = 0.01;
-                inputSlideInput.value = 0.5;
-                inputSlideInput.style.width = "200px";
-                opacitySlideDiv.appendChild(inputSlideInput);
-
-                // Text changes with slider
-                const opacityPercentTextDiv = document.createElement('div');
-                opacityPercentTextDiv.id = "opacityPercentTextDiv"
-                opacityPercentText = document.createTextNode('50% Opacity');
-                opacityPercentTextDiv.appendChild(opacityPercentText);
-
-                inputSlideInput.addEventListener('change', function updateOpacity(e) {
-                    if (geojson != undefined)
-                        geojson.setStyle({
-                            fillOpacity: e.target.value
-                        });
-                    opacityPercentTextDiv.innerText = Math.round(e.target.value * 100.0) + "% Opacity"
-                });
-
-                // Add to title
-                opacityDiv.appendChild(opacitySlideDiv);
-                opacityDiv.appendChild(opacityPercentTextDiv);
-                document.getElementById('title').appendChild(opacityDiv);
-
-                // Function to set style depending on variable
-                function UpdateLayerStyle(selectionCol, incomeCol, opacityValue) {
-                    geojson.setStyle(function (e) {
-                        if (incomeCol === "median_income_(dollars)" || incomeCol === "mean_income_(dollars)") {
-                            return {
-                                fillColor: getColorMoney(e.properties[selectionCol]),
-                                weight: 3,
-                                opacity: 1,
-                                color: '#5a5a5a',
-                                fillOpacity: opacityValue
-                            }
-                        } else if (incomeCol === 'total') {
-                            return {
-                                fillColor: getTotals(e.properties[selectionCol]),
-                                weight: 3,
-                                opacity: 1,
-                                color: '#5a5a5a',
-                                fillOpacity: opacityValue
-                            }
-                        }
-                        else {
-                            return {
-                                fillColor: getPercent(e.properties[selectionCol]),
-                                weight: 3,
-                                opacity: 1,
-                                color: '#5a5a5a',
-                                fillOpacity: opacityValue
-                            }
-                        }
-                    });
-                }
-
-                // Event for when a selection is made
-                function handleChange(event) {
-                    incomeType = selectionDiv.childNodes[0].value
-                    incomeCol = selectionDiv.childNodes[1].value
-                    selectionIncomeCol = incomeCol + "-" + incomeType;
-                    if (incomeCol == 'GEOIDFQ') {
-                        geojson.resetStyle();
-                    } else {
-                        UpdateLayerStyle(selectionIncomeCol, incomeCol, inputSlideInput.value);
-                    }
-
-                    // Update pop up
-                    geojson.eachLayer(function (layer) {
-                        if (incomeCol === "median_income_(dollars)" || incomeCol === "mean_income_(dollars)") {
-                            popupString = '<strong>' + formatter.format(layer.feature.properties[selectionIncomeCol]) + '</strong>'
-                        } else if (incomeCol === 'total') {
-                            popupString = '<strong>' + layer.feature.properties[selectionIncomeCol] + '</strong>'
-                        } else if (incomeCol === 'GEOIDFQ') {
-                            popupString = '<strong>' + layer.feature.properties[incomeCol] + '</strong>'
-                        } else {
-                            popupString = '<strong>' + layer.feature.properties[selectionIncomeCol] + '%</strong>'
-                        }
-                        layer.bindPopup(popupString);
-                    });
-                    map.addControl(legend);
-                    //map.fitBounds(map.getBounds());
-                }
-                selectionDiv.addEventListener('change', handleChange);
-
-            });
-
-        </script>
-
-    </div>
+                zipLayer = found;
+                zipLayer.setStyle({ weight: 4, color: '#1b1b1b', dashArray: '8 6', opacity: 1, fillOpacity: 0 });
+                zipLayer.addTo(map);
+                map.fitBounds(zipLayer.getBounds());
+            }).catch(() => { status.textContent = 'Zip codes failed to load.'; });
+        });
+    </script>
 </body>
 
 </html>

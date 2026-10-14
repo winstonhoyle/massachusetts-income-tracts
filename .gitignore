@@ -1,2 +1,12 @@
-data/
+# Python
+__pycache__/
 .venv/
+.pytest_cache/
+
+# Secrets
+.env
+.env.*
+!.env.sample
+
+# Downloaded source data
+data/
